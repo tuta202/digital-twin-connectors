@@ -1,4 +1,4 @@
-# Py Data Connector
+# Digital Twin Connector
 
 Async Python module for ingesting data from GitHub, Google Drive, Gmail, and
 Google Calendar through Model Context Protocol (MCP) servers.
