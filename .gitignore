@@ -1,0 +1,42 @@
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Local environment and credentials
+.env
+.env.*
+!.env.example
+*.credentials.json
+gcp-oauth.keys.json
+credentials.json
+token.json
+gmail_credentials.json
+.mcp/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Logs and local runtime files
+*.log
+logs/
+tmp/
+temp/
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
