@@ -456,6 +456,37 @@ MCP server startup is slow:
 
 - This is normal on first run because `npx -y` may download npm packages.
 
+## Streamlit Demo UI
+
+The project includes a local Streamlit dashboard:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+streamlit run streamlit_app.py
+```
+
+The UI exposes demo buttons for common digital-twin ingestion scenarios:
+
+- Google Calendar: list meetings/events this week.
+- Gmail: find today's emails and read message contents.
+- Jira: list visible projects and issues assigned to you.
+- GitHub: fetch the configured demo issue.
+- Slack: list channels and read recent messages from a configured channel.
+- Google Drive: read the configured Drive file.
+
+Optional UI-specific environment variables:
+
+```dotenv
+APP_TIMEZONE=Asia/Bangkok
+GMAIL_TODAY_MAX_RESULTS=5
+SLACK_DEMO_CHANNEL_ID=
+SLACK_HISTORY_LIMIT=10
+```
+
+Set `SLACK_DEMO_CHANNEL_ID` to a Slack channel ID such as `C01234567` if you
+want the Slack messages button to read a specific channel. If it is empty, the
+app uses the first value from `SLACK_CHANNEL_IDS`.
+
 ## Development Checks
 
 Compile-check the module:
