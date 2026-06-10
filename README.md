@@ -1,7 +1,7 @@
 # Digital Twin Connector
 
-Async Python module for ingesting data from GitHub, Google Drive, Gmail, and
-Google Calendar through Model Context Protocol (MCP) servers.
+Async Python module for ingesting data from GitHub, Google Drive, Gmail,
+Google Calendar, Slack, and Jira through Model Context Protocol (MCP) servers.
 
 The main entrypoint is `digital_twin_ingestor.py`, which defines
 `DigitalTwinIngestor`.
@@ -135,6 +135,17 @@ GOOGLE_CALENDAR_TIME_MAX=
 GMAIL_SEARCH_QUERY=in:inbox
 GMAIL_MAX_RESULTS=10
 
+# Slack MCP server
+SLACK_BOT_TOKEN=
+SLACK_TEAM_ID=
+SLACK_CHANNEL_IDS=
+SLACK_CHANNEL_LIMIT=20
+
+# Jira MCP server
+JIRA_BASE_URL=
+JIRA_EMAIL=
+JIRA_API_TOKEN=
+
 # Optional logging
 LOG_LEVEL=INFO
 ```
@@ -173,6 +184,27 @@ Google Calendar:
   `https://www.googleapis.com/auth/calendar`.
 - Run the Calendar auth flow once before using Calendar ingestion.
 
+Slack:
+
+- Create a Slack app at `https://api.slack.com/apps`.
+- Add bot scopes:
+  `channels:history`, `channels:read`, `chat:write`, `reactions:write`,
+  `users:read`, and `users.profile:read`.
+- Install the app to your workspace.
+- Put the Bot User OAuth Token in `SLACK_BOT_TOKEN`.
+- Put your workspace ID in `SLACK_TEAM_ID`.
+- Optionally set `SLACK_CHANNEL_IDS` to a comma-separated allowlist of channel
+  IDs.
+
+Jira:
+
+- Create an Atlassian API token at
+  `https://id.atlassian.com/manage-profile/security/api-tokens`.
+- Put your Jira URL in `JIRA_BASE_URL`, for example
+  `https://your-company.atlassian.net`.
+- Put your Atlassian account email in `JIRA_EMAIL`.
+- Put the generated token in `JIRA_API_TOKEN`.
+
 ## MCP Servers Used
 
 The Python module starts these servers with `npx`:
@@ -182,6 +214,8 @@ GitHub:          npx -y @modelcontextprotocol/server-github
 Google Drive:    npx -y @modelcontextprotocol/server-gdrive
 Gmail:           npx -y @gongrzhe/server-gmail-autoauth-mcp
 Google Calendar: npx -y @gongrzhe/server-calendar-autoauth-mcp
+Slack:           npx -y @modelcontextprotocol/server-slack
+Jira:            npx -y mcp-jira-stdio
 ```
 
 The first run may take longer because `npx` downloads the server packages.
@@ -190,11 +224,68 @@ Important package status as of this project setup:
 
 - `@modelcontextprotocol/server-github` exists but is deprecated on npm.
 - `@modelcontextprotocol/server-gdrive` exists but is deprecated on npm.
+- `@modelcontextprotocol/server-slack` exists but is deprecated on npm.
+- `mcp-jira-stdio` is used for Jira Cloud/Server API access.
 - `@modelcontextprotocol/server-gmail` currently returns `404` on npm.
 - `@modelcontextprotocol/server-google-calendar` currently returns `404` on npm.
 - The project uses working replacement packages for Gmail and Calendar:
   `@gongrzhe/server-gmail-autoauth-mcp` and
   `@gongrzhe/server-calendar-autoauth-mcp`.
+
+## Slack Setup
+
+1. Create a Slack app from scratch at `https://api.slack.com/apps`.
+2. Go to OAuth & Permissions.
+3. Add these Bot Token Scopes:
+
+```text
+channels:history
+channels:read
+chat:write
+reactions:write
+users:read
+users.profile:read
+```
+
+4. Install the app to your workspace.
+5. Copy the Bot User OAuth Token, which starts with `xoxb-`.
+6. Find your workspace/team ID, which starts with `T`.
+7. Add these values to `.env`:
+
+```dotenv
+SLACK_BOT_TOKEN=xoxb-your-token
+SLACK_TEAM_ID=T01234567
+SLACK_CHANNEL_IDS=
+SLACK_CHANNEL_LIMIT=20
+```
+
+If you set `SLACK_CHANNEL_IDS`, use channel IDs such as `C01234567`, separated
+by commas. Leave it empty to let the server list public channels.
+
+## Jira Setup
+
+1. Open Atlassian API tokens:
+   `https://id.atlassian.com/manage-profile/security/api-tokens`.
+2. Create a token and copy it immediately.
+3. Add these values to `.env`:
+
+```dotenv
+JIRA_BASE_URL=https://your-company.atlassian.net
+JIRA_EMAIL=your-email@example.com
+JIRA_API_TOKEN=your-api-token
+```
+
+The demo uses the read-only tool `jira_get_visible_projects`. Other useful
+tools exposed by `mcp-jira-stdio` include:
+
+```text
+jira_get_visible_projects
+jira_get_project_info
+jira_get_issue
+jira_search_issues
+jira_get_my_issues
+jira_get_users
+```
 
 ## Google Drive Auth
 
@@ -306,7 +397,9 @@ The demo will:
 3. Read a Google Drive file through MCP resource `gdrive:///<file_id>`.
 4. Call Gmail tool `search_emails`.
 5. Call Google Calendar tool `list_events`.
-6. Close all MCP sessions on exit.
+6. Call Slack tool `slack_list_channels`.
+7. Call Jira tool `jira_get_visible_projects`.
+8. Close all MCP sessions on exit.
 
 ## Use As A Module
 

@@ -1,4 +1,4 @@
-"""Async MCP ingestor for GitHub, Google Drive, Gmail, and Calendar."""
+"""Async MCP ingestor for GitHub, Google Workspace, Slack, and Jira."""
 
 from __future__ import annotations
 
@@ -57,6 +57,7 @@ class ServerConfig:
     name: str
     package: str
     required_env: tuple[str, ...]
+    optional_env: tuple[str, ...] = ()
     credential_strategy: CredentialStrategy = "none"
 
 
@@ -91,6 +92,17 @@ DEFAULT_SERVERS: tuple[ServerConfig, ...] = (
         package="@gongrzhe/server-calendar-autoauth-mcp",
         required_env=GOOGLE_ENV,
         credential_strategy="google_autoauth",
+    ),
+    ServerConfig(
+        name="slack",
+        package="@modelcontextprotocol/server-slack",
+        required_env=("SLACK_BOT_TOKEN", "SLACK_TEAM_ID"),
+        optional_env=("SLACK_CHANNEL_IDS",),
+    ),
+    ServerConfig(
+        name="jira",
+        package="mcp-jira-stdio",
+        required_env=("JIRA_BASE_URL", "JIRA_EMAIL", "JIRA_API_TOKEN"),
     ),
 )
 
@@ -285,6 +297,10 @@ def _build_server_environment(config: ServerConfig) -> dict[str, str]:
     env = dict(os.environ)
     for key in config.required_env:
         env[key] = os.environ[key]
+    for key in config.optional_env:
+        value = os.getenv(key)
+        if value:
+            env[key] = value
 
     if config.credential_strategy == "gdrive":
         _configure_gdrive(env)
@@ -459,6 +475,20 @@ async def _demo() -> None:
             calendar_args,
         )
         LOGGER.info("Google Calendar events payload:\n%s", calendar_events)
+
+        slack_channels = await ingestor.fetch_data(
+            "slack",
+            "slack_list_channels",
+            {"limit": int(os.environ.get("SLACK_CHANNEL_LIMIT", "20"))},
+        )
+        LOGGER.info("Slack channels payload:\n%s", slack_channels)
+
+        jira_projects = await ingestor.fetch_data(
+            "jira",
+            "jira_get_visible_projects",
+            {},
+        )
+        LOGGER.info("Jira projects payload:\n%s", jira_projects)
 
         if stop_event.is_set():
             LOGGER.info("Demo stopped by signal.")
